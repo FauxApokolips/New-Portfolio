@@ -1,400 +1,307 @@
-import React, { useState, useEffect } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 18 },
-  show: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" },
-  }),
-};
+import Navbar from "./components/Navbar";
+import Section from "./components/Section";
 
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.12 } },
-};
+// FX
+import GlassNoise from "./components/GlassNoise";
+import AmbientLight from "./components/AmbientLight";
+import Particles from "./components/Particles";
+import ShaderBackground from "./components/ShaderBackground";
+import GlowParallax from "./components/GlowParallax";
+import ParallaxGlow from "./components/ParallaxGlow";
+import NebulaField from "./components/NebulaField";
+import NebulaParticles from "./components/NebulaParticles";
+import SpotlightCursor from "./components/SpotlightCursor";
+import TrailCursor from "./components/TrailCursor";
+import ScrollParallaxLayer from "./components/ScrollParallaxLayer";
 
-const DATA = {
-  name: "Ekansh Pandey",
-  role: "Computer Science Aspirant",
-  location: "S.R.M KTR, Chennai",
-  tagline:
-    "I am an aspiring developer currently studying at S.R.M University. My strong foundation in computer science, combined with hands-on experience from my role in a developer club, positions me well for creating engaging user interfaces and efficient back-end solutions. I am passionate about learning and implementing Artificial Intelligence into my projects. Available for internships and freelance.",
-  socials: [
-    { label: "GitHub", href: "https://github.com/FauxApokolips" },
-    { label: "LinkedIn", href: "https://www.linkedin.com/in/ekansh-pandey-392938301" },
-    { label: "Email", href: "mailto:ekansh.pandey2004@gmail.com" },
-  ],
-  projects: [
-    {
-      title: "Financial & Banking Services (PHP MVC)",
-      tech: ["PHP", "MVC", "REST API", "MySQL", "JWT"],
-      desc:
-        "Secure banking backend with modular MVC architecture, REST endpoints for accounts, KYC, transfers, and role-based access.",
-      link: "https://project1.com",
-      source: "https://project1.com/source-code",
-    },
-    {
-      title: "Kubernetes Observability with Prometheus & Grafana",
-      tech: ["Docker", "Kubernetes", "GitHub Actions", "CI/CD", "Grafana", "Promentheus", ],
-      desc:
-        "Cloud-ready app with automated pipelines, preview environments, and blue-green deploys for zero downtime.",
-      link: "https://github.com/FauxApokolips/k8s-observability-project/blob/main/README.md ",
-      source: "https://github.com/FauxApokolips/k8s-observability-project",
-    },
-    {
-      title: "Real-Time Chat (React + Firebase)",
-      tech: ["React", "Firestore", "Auth", "Vite"],
-      desc:
-        "Auth-gated chat rooms with presence, typing indicators, and optimistic UI synced via Firestore listeners.",
-      link: "https://project3.com",
-      source: "https://project3.com/source-code",
-    },
+// Hero
+import Tilt3D from "./components/Tilt3D";
+import Reveal from "./components/Reveal";
+import FloatingText from "./components/FloatingText";
+import Magnetic from "./components/Magnetic";
+import HeroDepthLayers from "./components/HeroDepthLayers";
+import AccentController from "./components/AccentController";
+import GlassHero from "./components/GlassHero";
 
-    {
-      title: "Doctor Listing API Testing",
-      tech: ["React", "RESTFul API", "Tailwind", "MySQL"],
-      desc:
-        "The Doctor Listing Web Application is a lightweight frontend project designed to test and validate APIs that provide doctor-related data. It features an intuitive search and filter interface where users can look up doctors based on specialties, consultation type, or location.",
-      link: "https://doctor-listing-api-testing-6v652bmtx-fauxapokolips-projects.vercel.app/",
-      source: "https://github.com/FauxApokolips/Doctor-Listing-API-Testing",
-    },
-  ],
-  skills: [
-    ["JavaScript/TypeScript", "React", "Next.js", "Node.js", "Grafana", "Prometheuss"],
-    ["Python", "FastAPI", "Pandas", "NumPy"],
-    ["PostgreSQL", "MySQL", "MongoDB"],
-    ["Docker", "Kubernetes", "CI/CD", "Git", "Terraform"],
-    ["TailwindCSS", "Framer Motion", "Vite", "AWS", "PHP", "MVC"],
-    ["C", "C++", "Java"],
-  ],
-  experience: [
-    {
-      company: "Next Gen AI",
-      role: "Full Stack Developer",
-      period: "May 2023 – Sep 2024",
-      points: [
-        "Designed and developed dynamic and responsive websites using HTML, CSS, JavaScript, and PHP.",
-        "Worked with REST APIs to retrieve and display data from databases.",
-        "Improved website performance and speed through optimization techniques by 55%."
-      ],
-    },
+// Sections
+import AboutSection from "./sections/AboutSection";
+import ProjectsSection from "./sections/ProjectsSection";
+import ExperienceSection from "./sections/ExperienceSection";
+import ContactSection from "./sections/ContactSection";
 
-    { 
-      company: "Teleperformance", 
-      role: "Data/AI Intern",
-      period: "Jun 2025 – Jul 2025",
-      points: [
-        "Built ETL pipelines with quality checks and reporting.",
-        "Prototyped RAG microservice for legal documents.",
-      ],
-    },
+import { DATA } from "./data";
 
-    {
-      company: "InHouse",
-      role: "Project Lead",
-      period: "Aug 2024 – Dec 2024",
-      points: [
-        "Researched biometric spoof detection with CV models.",
-        "Improved dataset curation and evaluation scripts.",
-      ],
-    },
-  ],
-};
+function pickInitialQuality() {
+  try {
+    const prefersReduced =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------------- Section Wrapper ----------------
-const Section = ({ id, title, children }) => (
-  <section
-    id={id}
-    className="scroll-mt-24 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16"
-  >
-    <motion.h2
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-2xl sm:text-3xl font-semibold tracking-tight"
-    >
-      {title}
-      <span className="block h-[2px] w-12 mt-2 bg-gradient-to-r from-white/80 to-white/20 rounded-full"></span>
-    </motion.h2>
-    <div className="mt-6">{children}</div>
-  </section>
-);
-const ProjectCard = ({ p }) => (
-  <motion.a
-    href={p.link}
-    target="_blank"
-    rel="noopener noreferrer"
-    initial={{ opacity: 0, y: 12 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    className="group block rounded-2xl border border-white/10 p-6 bg-white/[0.06] backdrop-blur hover:bg-white/[0.1] hover:shadow-xl hover:shadow-white/5 transition-transform duration-300 will-change-transform"
-    whileHover={{ y: -6 }}
-  >
-    <div className="flex items-start justify-between gap-4">
-      <h3 className="text-lg font-medium tracking-tight">{p.title}</h3>
-      <span className="text-xs opacity-70">Visit ↗</span>
-    </div>
-    <p className="mt-2 text-sm text-neutral-300">{p.desc}</p>
-    <div className="mt-4 flex flex-wrap gap-2">
-      {p.tech.map((t) => (
-        <span
-          key={t}
-          className="rounded-lg border border-white/10 px-2.5 py-1 text-xs bg-white/[0.06] group-hover:bg-white/[0.12] transition"
-        >
-          {t}
-        </span>
-      ))}
-    </div>
-  </motion.a>
-);
+    const isMobile =
+      window.innerWidth < 768 ||
+      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    const cores = navigator.hardwareConcurrency || 4;
+    const mem = navigator.deviceMemory || 8;
+
+    if (prefersReduced) return "low";
+    if (isMobile) return "low";
+    if (mem <= 4) return "low";
+    if (cores <= 4) return "mid";
+    return "high";
+  } catch {
+    return "mid";
+  }
+}
+
+const isMobile =
+  window.matchMedia("(max-width: 768px)").matches ||
+  navigator.maxTouchPoints > 0;
+
+const QUALITY = isMobile ? "low" : "high";
+
 
 export default function App() {
-  const [open, setOpen] = useState(false);
-  const shouldReduce = useReducedMotion();
+  const [quality, setQuality] = useState(() => pickInitialQuality());
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+  });
 
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && setOpen(false);
-    if (open) window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+    const onResize = () => {
+      setIsMobile(
+        window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+      );
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const rafRef = useRef(0);
+  useEffect(() => {
+    let frames = 0;
+    const start = performance.now();
+
+    const tick = () => {
+      frames += 1;
+      const now = performance.now();
+      const elapsed = now - start;
+
+      if (elapsed >= 1600) {
+        const fps = (frames * 1000) / elapsed;
+        setQuality((q) => {
+          if (q === "low") return "low";
+          if (q === "high" && fps < 50) return "mid";
+          if (q === "mid" && fps < 42) return "low";
+          return q;
+        });
+        cancelAnimationFrame(rafRef.current);
+        return;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.background = "#000";
+    document.body.style.margin = "0";
+  }, []);
+
+  const isTouch = typeof window !== "undefined" && (
+  "ontouchstart" in window || navigator.maxTouchPoints > 0
+);
+
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const tuned = useMemo(() => {
+    if (quality === "low") {
+      return {
+        nebulaStrength: 0.18,
+        nebulaParticlesDensity: 0,
+        ambientBlur: 40,
+        particlesCount: 0,
+        glowParallaxStrength: 0,
+        enableShader: false,
+        enableNebulaField: true,
+        enableNebulaParticles: false,
+        enableNoise: false,
+        enableCursorFX: false,
+      };
+    }
+    if (quality === "mid") {
+      return {
+        nebulaStrength: 0.28,
+        nebulaParticlesDensity: 0,
+        ambientBlur: 60,
+        particlesCount: 10,
+        glowParallaxStrength: 0.06,
+        enableShader: true,
+        enableNebulaField: true,
+        enableNebulaParticles: false,
+        enableNoise: true,
+        enableCursorFX: false,
+      };
+    }
+    return {
+      nebulaStrength: 0.38,
+      nebulaParticlesDensity: 80,
+      ambientBlur: 70,
+      particlesCount: 18,
+      glowParallaxStrength: 0.08,
+      enableShader: true,
+      enableNebulaField: true,
+      enableNebulaParticles: true,
+      enableNoise: true,
+      enableCursorFX: true,
+    };
+  }, [quality]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(60%_60%_at_50%_0%,#0b0b0b,transparent),linear-gradient(#0b0b0b,#0a0a0a)] text-neutral-100">
-      {/* Navbar */}
-      <div className="sticky top-0 z-40 backdrop-blur bg-neutral-950/70 border-b border-white/10">
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="#home" className="font-semibold tracking-tight">
-            {DATA.name}
-          </a>
-          <div className="hidden sm:flex items-center gap-6 text-sm">
-            <a href="#projects" className="hover:opacity-80">
-              Projects
-            </a>
-            <a href="#skills" className="hover:opacity-80">
-              Skills
-            </a>
-            <a href="#experience" className="hover:opacity-80">
-              Experience
-            </a>
-            <a href="#contact" className="hover:opacity-80">
-              Contact
-            </a>
-          </div>
-          <button
-            className="sm:hidden inline-flex items-center justify-center rounded-xl border border-white/10 px-3 py-2 text-sm"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-label="Toggle menu"
-          >
-            Menu
-          </button>
-        </nav>
-        {open && (
-          <div className="sm:hidden border-t border-white/10 px-4 pb-4">
-            <div className="flex flex-col gap-2">
-              {["projects", "skills", "experience", "contact"].map((id) => (
-                <a
-                  key={id}
-                  href={`#${id}`}
-                  onClick={() => setOpen(false)}
-                  className="py-2"
-                >
-                  {id[0].toUpperCase() + id.slice(1)}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+    <div className="relative min-h-screen overflow-x-hidden">
+      {/* Quality badge */}
+      <div className="fixed top-20 left-4 z-[10001] pointer-events-none">
+        <div className="px-3 py-1 rounded-full text-[11px] tracking-wider uppercase border border-white/10 bg-black/40 backdrop-blur-md">
+          <span className="text-neutral-300">Quality:</span>{" "}
+          <span className="text-cyan-300">{quality}</span>
+        </div>
       </div>
 
-      {/* Hero */}
-      <section
-        id="home"
-        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8"
-      >
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-          className="grid md:grid-cols-2 gap-8 items-center"
+      <AccentController />
+
+      {/* Background stack */}
+      {tuned.enableShader ? (
+        <ShaderBackground quality={quality} />
+      ) : (
+        <div
+          className="fixed inset-0 z-[0] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 25%, rgba(0,255,255,.12), transparent 55%), radial-gradient(circle at 70% 70%, rgba(183,109,255,.10), transparent 55%), #000",
+          }}
+        />
+      )}
+
+      {QUALITY === "high" && <ShaderBackground />}
+      <NebulaParticles quality={QUALITY} />
+      <div className="quality-indicator">
+      QUALITY: {QUALITY.toUpperCase()}
+      </div>
+
+      {tuned.enableNebulaField && (
+        <div
+          className="fixed inset-0 z-[1] pointer-events-none"
+          style={{ transform: "translateZ(0)", willChange: "transform" }}
         >
-          <motion.div variants={fadeIn}>
-            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {DATA.name}
-            </h1>
-            <p className="mt-2 text-lg text-neutral-300">
-              {DATA.role} · {DATA.location}
-            </p>
-            <p className="mt-6 text-neutral-300 leading-relaxed">
-              {DATA.tagline}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              {DATA.socials.map((s, i) => (
-                <motion.a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  custom={i}
-                  variants={fadeIn}
-                  className="rounded-xl border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
-                >
-                  {s.label}
-                </motion.a>
-              ))}
-            </div>
-          </motion.div>
-          <motion.div
-  initial={{ opacity: 0, scale: 0.97 }}
-  whileInView={{ opacity: 1, scale: 1 }}
-  viewport={{ once: true }}
-  whileHover={{ y: -6, scale: 1.03 }}
-  transition={{ type: "spring", stiffness: 200, damping: 18 }}
-  className="relative group"
->
-  <img
-    src="/back.jpg"   
-    alt="Ekansh Pandey"
-    className="aspect-square object-cover rounded-3xl border border-white/10 shadow-2xl transition duration-500 group-hover:shadow-[0_0_25px_rgba(0,200,255,0.35)]"
-  />
-  <div className="absolute inset-0 m-6 rounded-2xl border border-dashed border-white/10 pointer-events-none transition group-hover:border-white/20" />
-</motion.div>
-
-
-        </motion.div>
-      </section>
-
-      {/* Projects */}
-      <Section id="projects" title="Projects">
-        <div className="grid md:grid-cols-2 gap-6">
-          {DATA.projects.map((p) => (
-            <ProjectCard key={p.title} p={p} />
-          ))}
+          <NebulaField strength={tuned.nebulaStrength} color="#6b5cff" />
+          {tuned.enableNebulaParticles && (
+            <NebulaParticles
+              density={tuned.nebulaParticlesDensity}
+              size={1.25}
+              glow={0.35}
+              quality={quality}
+            />
+          )}
         </div>
-      </Section>
+      )}
 
-      {/* Skills */}
-      <Section id="skills" title="Skills">
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"
-        >
-          {DATA.skills.map((row, i) => (
-            <motion.div
-              key={i}
-              variants={fadeIn}
-              className="rounded-2xl border border-white/10 p-4 bg-white/5"
-            >
-              <ul className="flex flex-wrap gap-2">
-                {row.map((s) => (
-                  <li
-                    key={s}
-                    className="rounded-lg bg-white/10 px-2.5 py-1 text-xs"
-                  >
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </motion.div>
-      </Section>
+      {tuned.glowParallaxStrength > 0 && <GlowParallax strength={tuned.glowParallaxStrength} />}
+      {tuned.glowParallaxStrength > 0 && (
+        <ParallaxGlow speed={0.08} color="rgba(0,255,255,0.18)" />
+      )}
 
-      {/* Experience */}
-      <Section id="experience" title="Experience">
-        <div className="space-y-4">
-          {DATA.experience.map((e) => (
-            <motion.div
-              key={e.company}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="rounded-2xl border border-white/10 p-6 bg-white/5 hover:shadow-lg hover:shadow-white/5 transition"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-lg font-medium">
-                  {e.role} · {e.company}
-                </h3>
-                <span className="text-sm opacity-70">{e.period}</span>
+      {tuned.enableNoise && <GlassNoise />}
+      <AmbientLight blur={tuned.ambientBlur} />
+
+      {tuned.particlesCount > 0 && (
+        <ScrollParallaxLayer speed={0.02}>
+          <Particles count={tuned.particlesCount} />
+        </ScrollParallaxLayer>
+      )}
+
+      {/* Cursor FX (tier-aware) */}
+      {!isMobile && <SpotlightCursor />}
+            {!isMobile && <TrailCursor trailLength={10} />}
+      <Navbar />
+
+      {/* HERO (kept in App.jsx) */}
+      <Section id="hero" data-accent="#3af2ff">
+        <GlassHero>
+          <HeroDepthLayers />
+          <Reveal delay={0.1}>
+            <div className="pt-20 grid md:grid-cols-2 gap-16 items-center">
+              <div className="space-y-4">
+                <FloatingText speed={0.15}>
+                  <h1 className="text-5xl md:text-6xl font-extrabold neon-title">
+                    {DATA.name}
+                  </h1>
+                </FloatingText>
+
+                <FloatingText speed={0.25}>
+                  <p className="text-neutral-400 text-lg">{DATA.location}</p>
+                </FloatingText>
+
+                <FloatingText speed={0.35}>
+                  <p className="mt-4 text-neutral-300 text-lg max-w-md leading-relaxed">
+                    I am an aspiring developer currently studying at S.R.M University. 
+                    My strong foundation in computer science, combined with hands-on experience from my role in a developer club, positions me well for creating engaging user interfaces and efficient back-end solutions.
+                    I am passionate about learning and implementing Artificial Intelligence into my projects. Available for internships and freelance.
+                  </p>
+                </FloatingText>
+
+                <FloatingText speed={0.45}>
+                  <div className="flex gap-4 mt-8">
+                    <Magnetic strength={0.35}>
+                      <a
+                        href="#projects"
+                        className="px-6 py-3 bg-cyan-400 text-black font-semibold rounded-lg shadow-lg hover:scale-105 transition-transform"
+                      >
+                        View Projects
+                      </a>
+                    </Magnetic>
+
+                    <Magnetic strength={0.35}>
+                      <a
+                        href="./Ekansh_s_Resume.pdf"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-6 py-3 border border-white/20 rounded-lg hover:bg-white hover:text-black transition-colors"
+                      >
+                        Résumé
+                      </a>
+                    </Magnetic>
+                  </div>
+                </FloatingText>
               </div>
-              <ul className="mt-3 list-disc list-inside text-sm text-neutral-300 space-y-1">
-                {e.points.map((pt, idx) => (
-                  <li key={idx}>{pt}</li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </div>
-      </Section>
 
-      {/* Contact */}
-      <Section id="contact" title="Contact">
-        <div className="rounded-2xl border border-white/10 p-6 bg-white/5">
-          <p className="text-neutral-300">
-            Want to collaborate or chat about an opportunity? Drop a note:
-          </p>
-          <form
-            className="mt-4 grid gap-3 sm:grid-cols-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.currentTarget;
-              const data = Object.fromEntries(new FormData(form).entries());
-              const subject = encodeURIComponent("Portfolio Inquiry");
-              const body = encodeURIComponent(
-                `Hi ${DATA.name},\n\nI'm reaching out regarding your portfolio.\n` +
-                  `Name: ${data.name}\nEmail: ${data.email}\nMessage: ${data.message}`
-              );
-              window.location.href = `mailto:ekansh.pandey2004@gmail.com?subject=${subject}&body=${body}`;
-            }}
-          >
-            <input
-              name="name"
-              placeholder="Your name"
-              className="sm:col-span-1 rounded-xl bg-neutral-900 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-white/20"
-              required
-            />
-            <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              className="sm:col-span-1 rounded-xl bg-neutral-900 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-white/20"
-              required
-            />
-            <textarea
-              name="message"
-              placeholder="Message"
-              className="sm:col-span-2 min-h-[120px] rounded-xl bg-neutral-900 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-white/20"
-              required
-            />
-            <div className="sm:col-span-2 flex items-center gap-3">
-              <button
-                type="submit"
-                className="rounded-xl bg-white text-neutral-900 px-4 py-2 text-sm font-medium hover:opacity-90 active:scale-[0.98] shadow-sm"
-              >
-                Send Email
-              </button>
-              <a
-                href="/resume.pdf"
-                className="text-sm underline underline-offset-4"
-              >
-                Download Résumé (PDF)
-              </a>
+              <div className="relative flex justify-center">
+                <Tilt3D maxTilt={14} glare={true} glareColor="cyan">
+                  <img
+                    src="/back.jpg"
+                    className="w-72 h-72 md:w-80 md:h-80 rounded-2xl object-cover shadow-[0_0_40px_rgba(0,255,255,0.3)] border border-white/10 backdrop-blur-xl"
+                    alt="Profile"
+                  />
+                </Tilt3D>
+                <div className="absolute -z-10 w-80 h-80 bg-cyan-500/20 blur-[70px] rounded-full opacity-60" />
+              </div>
             </div>
-          </form>
-        </div>
+          </Reveal>
+        </GlassHero>
       </Section>
-      <div className="pointer-events-none fixed inset-0 opacity-[0.15] [background:radial-gradient(black_1px,transparent_1px)] [background-size:24px_24px]" />
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#000_100%)] opacity-60" />
 
-      {/* Footer */}
-      <footer className="py-10 text-center text-sm opacity-70">
-        © {new Date().getFullYear()} {DATA.name}. Never regret what you loose.
-      </footer>
+      {/* Sections (render directly — no extra wrappers) */}
+      <AboutSection />
+      <ProjectsSection />
+      <ExperienceSection />
+      <ContactSection />
     </div>
   );
 }
