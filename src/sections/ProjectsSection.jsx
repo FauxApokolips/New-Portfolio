@@ -3,11 +3,7 @@ import MagneticSection from "../components/MagneticSection";
 import SectionGlow from "../components/SectionGlow";
 import UpgradedProjectCard from "../components/UpgradedProjectCard";
 
-/**
- * Edit projects HERE.
- * Keep: title, description, tech[], category, link
- * category must match FILTERS
- */
+
 const PROJECTS = [
   {
     title: "HR Workflow Designer",
@@ -73,6 +69,16 @@ const PROJECTS = [
     category: "Backend",
     link: "https://github.com/FauxApokolips/Ragnex",
   },
+
+  {
+    title: "Old Portfolio",
+    description:
+      "My First try at a personalized portfolio using React and JavaScript in a simple black and white color scheme.",
+    tech: ["React", "JavaScript", "DataBase"],
+    category: "Frontend",
+    link: "https://my-portfolio-jade-eight-w6d0x7g188.vercel.app/",
+  },
+
 ];
 
 const FILTERS = ["All", "Frontend", "Backend", "DevOps", "AI"];
